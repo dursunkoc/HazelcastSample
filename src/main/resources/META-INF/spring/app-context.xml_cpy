@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:hz="http://www.hazelcast.com/schema/config" xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.5.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.0.xsd
+		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-3.0.xsd 
+		http://www.hazelcast.com/schema/config http://www.hazelcast.com/schema/config/hazelcast-spring.xsd">
+
+	<description>Application context for Spring-Hibernate-Hazelcast
+		integration.
+	</description>
+	<bean id="hazelcastConfig" class="com.hazelcast.config.Config">
+		<property name="groupConfig">
+			<bean class="com.hazelcast.config.GroupConfig">
+				<property name="name" value="dev" />
+				<property name="password" value="pwd" />
+			</bean>
+		</property>
+		<property name="properties">
+			<props>
+				<prop key="hazelcast.merge.first.run.delay.seconds">5</prop>
+				<prop key="hazelcast.merge.next.run.delay.seconds">5</prop>
+			</props>
+		</property>
+		<property name="networkConfig">
+			<bean class="com.hazelcast.config.NetworkConfig">
+				<property name="interfaces">
+					<bean class="com.hazelcast.config.Interfaces">
+						<property name="enabled" value="true" />
+						<property name="interfaces">
+							<list>
+								<value>192.168.56.1</value>
+							</list>
+						</property>
+					</bean>
+				</property>
+				<property name="join">
+					<bean class="com.hazelcast.config.Join">
+						<property name="tcpIpConfig">
+							<bean class="com.hazelcast.config.TcpIpConfig">
+								<property name="enabled" value="true" />
+								<property name="members">
+									<list>
+										<value>192.168.56.1</value>
+									</list>
+								</property>
+							</bean>
+						</property>
+					</bean>
+				</property>
+			</bean>
+		</property>
+	</bean>
+	<bean id="instance" class="com.hazelcast.core.Hazelcast"
+		factory-method="newHazelcastInstance">
+		<constructor-arg ref="hazelcastConfig" />
+	</bean>
+
+	<bean id="map" factory-bean="instance" factory-method="getMap">
+		<constructor-arg value="map" />
+	</bean>
+	
+	<bean id="mapStore" class=""></bean>
+	
+	
+
+	<context:component-scan base-package="com.aric.sample" />
+
+	<bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource"
+		p:driverClassName="${jdbc.mysql.driverClassName}" p:url="${jdbc.mysql.url}"
+		p:username="${jdbc.mysql.username}" p:password="${jdbc.mysql.password}" />
+
+	<bean id="placeholderProperties"
+		class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer"
+		p:location="classpath:datasource.properties"
+		p:ignoreUnresolvablePlaceholders="false" p:order="1">
+	</bean>
+
+	<tx:annotation-driven mode="proxy"
+		transaction-manager="transactionManager" />
+
+	<bean id="transactionManager"
+		class="org.springframework.orm.hibernate3.HibernateTransactionManager"
+		p:sessionFactory-ref="sessionFactory" p:nestedTransactionAllowed="true">
+	</bean>
+
+	<bean id="sessionFactory"
+		class="org.springframework.orm.hibernate3.annotation.AnnotationSessionFactoryBean">
+		<property name="dataSource" ref="dataSource" />
+		<property name="packagesToScan" value="com.aric.sample.domain" />
+		<property name="schemaUpdate" value="true" />
+		<property name="hibernateProperties">
+			<props>
+				<prop key="hibernate.format_sql">true</prop>
+				<prop key="hibernate.show_sql">false</prop>
+				<prop key="hibernate.dialect">org.hibernate.dialect.MySQLDialect</prop>
+				<prop key="hibernate.cache.use_second_level_cache">false</prop>
+				<prop key="hibernate.cache.use_query_cache">false</prop>
+				<!-- <prop key="hibernate.cache.use_minimal_puts">true</prop> <prop key="hibernate.cache.provider_class">com.hazelcast.hibernate.provider.HazelcastCacheProvider 
+					</prop> -->
+			</props>
+		</property>
+	</bean>
+
+</beans>

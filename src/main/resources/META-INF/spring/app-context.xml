@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:hz="http://www.hazelcast.com/schema/config" xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.5.xsd 
+						http://www.hazelcast.com/schema/config http://www.hazelcast.com/schema/config/hazelcast-spring.xsd 
+						http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.0.xsd 
+						http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-3.0.xsd">
+
+	<description>Application context for Spring-Hibernate-Hazelcast
+		integration. Hazelcast uses hibernate to store data.
+	</description>
+
+<!-- 	<hz:hazelcast id="instance">
+		<hz:config>
+			<hz:group name="dev" password="password" />
+			<hz:properties>
+				<hz:property name="hazelcast.merge.first.run.delay.seconds">5</hz:property>
+				<hz:property name="hazelcast.merge.next.run.delay.seconds">5</hz:property>
+			</hz:properties>
+			<hz:network port="5701" port-auto-increment="true">
+				<hz:join>
+					<hz:multicast enabled="false" multicast-group="224.2.2.3"
+						multicast-port="54327" />
+					<hz:tcp-ip enabled="true">
+						<hz:members>localhost</hz:members>
+					</hz:tcp-ip>
+				</hz:join>
+			</hz:network>
+			<hz:map name="map2">
+				<hz:map-store enabled="true" implementation="myMapStore"
+					write-delay-seconds="0" />
+			</hz:map>
+		</hz:config>
+	</hz:hazelcast>
+
+	<bean id="myMapStore" class="com.aric.sample.hazelcastSample.MyMapStore">
+		<property name="repository" ref="repository"></property>
+	</bean>
+ -->
+	<context:component-scan base-package="com.aric.sample" />
+
+	<bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource"
+		p:driverClassName="${jdbc.mysql.driverClassName}" p:url="${jdbc.mysql.url}"
+		p:username="${jdbc.mysql.username}" p:password="${jdbc.mysql.password}" />
+
+	<bean id="placeholderProperties"
+		class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer"
+		p:location="classpath:datasource.properties"
+		p:ignoreUnresolvablePlaceholders="false" p:order="1">
+	</bean>
+
+	<tx:annotation-driven mode="proxy"
+		transaction-manager="transactionManager" />
+
+	<bean id="transactionManager"
+		class="org.springframework.orm.hibernate3.HibernateTransactionManager"
+		p:sessionFactory-ref="sessionFactory" p:nestedTransactionAllowed="true">
+	</bean>
+
+	<bean id="sessionFactory"
+		class="org.springframework.orm.hibernate3.annotation.AnnotationSessionFactoryBean">
+		<property name="dataSource" ref="dataSource" />
+		<property name="packagesToScan" value="com.aric.sample.hazelcastSample.spring.model" />
+		<property name="schemaUpdate" value="true" />
+		<property name="hibernateProperties">
+			<props>
+				<prop key="hibernate.format_sql">true</prop>
+				<prop key="hibernate.show_sql">false</prop>
+				<prop key="hibernate.dialect">org.hibernate.dialect.MySQLDialect</prop>
+				<prop key="hibernate.cache.use_second_level_cache">false</prop>
+				<prop key="hibernate.cache.use_query_cache">false</prop>
+				<!-- <prop key="hibernate.cache.use_minimal_puts">true</prop> <prop key="hibernate.cache.provider_class">com.hazelcast.hibernate.provider.HazelcastCacheProvider 
+					</prop> -->
+			</props>
+		</property>
+	</bean>
+
+</beans>

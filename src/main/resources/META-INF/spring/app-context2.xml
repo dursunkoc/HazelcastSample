@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:hz="http://www.hazelcast.com/schema/config" xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.5.xsd 
+						http://www.hazelcast.com/schema/config http://www.hazelcast.com/schema/config/hazelcast-spring.xsd 
+						http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.0.xsd 
+						http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-3.0.xsd">
+
+	<description>Application context for Spring-Hibernate-Hazelcast
+		integration. Hibernate uses Hazelcast as second level cache
+	</description>
+
+	<context:component-scan base-package="com.aric.sample" />
+
+	<bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource"
+		p:driverClassName="${jdbc.mysql.driverClassName}" p:url="${jdbc.mysql.url}"
+		p:username="${jdbc.mysql.username}" p:password="${jdbc.mysql.password}" />
+
+	<bean id="placeholderProperties"
+		class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer"
+		p:location="classpath:datasource.properties"
+		p:ignoreUnresolvablePlaceholders="false" p:order="1">
+	</bean>
+
+	<tx:annotation-driven mode="proxy"
+		transaction-manager="transactionManager" />
+
+	<bean id="transactionManager"
+		class="org.springframework.orm.hibernate3.HibernateTransactionManager"
+		p:sessionFactory-ref="sessionFactory" p:nestedTransactionAllowed="true">
+	</bean>
+
+	<bean id="sessionFactory"
+		class="org.springframework.orm.hibernate3.annotation.AnnotationSessionFactoryBean">
+		<property name="dataSource" ref="dataSource" />
+		<property name="packagesToScan" value="com.aric.sample.hazelcastSample.spring.model" />
+		<property name="schemaUpdate" value="true" />
+		<property name="hibernateProperties">
+			<props>
+				<prop key="hibernate.format_sql">true</prop>
+				<prop key="hibernate.show_sql">true</prop>
+				<prop key="hibernate.dialect">org.hibernate.dialect.MySQLDialect</prop>
+				<prop key="hibernate.cache.use_second_level_cache">true</prop>
+				<prop key="hibernate.cache.use_query_cache">true</prop>
+
+                <prop key="hibernate.cache.provider_class">com.opensymphony.oscache.hibernate.OSCacheProvider</prop>
+                <prop key="hibernate.cache.provider_configuration_file_resource_path">/META-INF/spring/oscache.properties</prop>
+<!--  	
+				<prop key="hibernate.cache.provider_class">net.sf.ehcache.hibernate.EhCacheProvider</prop> 
+				<prop key="hibernate.cache.provider_configuration_file_resource_path">/META-INF/spring/ehcache.xml</prop>
+
+
+				<prop key="hibernate.cache.region.factory_class">com.hazelcast.hibernate.HazelcastCacheRegionFactory</prop> 
+
+				<prop key="hibernate.cache.region.factory_class">org.hibernate.cache.jbc2.SharedJBossCacheRegionFactory</prop>
+				<prop key="hibernate.cache.jbc2.query.localonly">true</prop>
+-->
+				<prop key="hibernate.generate_statistics">true</prop>
+			</props>
+		</property>
+
+	</bean>
+
+</beans>
